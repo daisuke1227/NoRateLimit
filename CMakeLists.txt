@@ -36,7 +36,8 @@ set(GENERATED_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode/Genera
 add_custom_command(
     OUTPUT "${GENERATED_SOURCE}.patched"
     COMMAND ${CMAKE_COMMAND} -E echo "Patching ${GENERATED_SOURCE}"
-    COMMAND sed -E "s/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$/\\1 { }/" "${GENERATED_SOURCE}" > "${GENERATED_SOURCE}.patched"
+    # Note how $$ is used to escape literal $ for Ninja:
+    COMMAND sed -E "s/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$$/$$1 { }/" "${GENERATED_SOURCE}" > "${GENERATED_SOURCE}.patched"
     COMMAND ${CMAKE_COMMAND} -E copy "${GENERATED_SOURCE}.patched" "${GENERATED_SOURCE}"
     DEPENDS "${GENERATED_SOURCE}"
     COMMENT "Patching GeneratedSource.cpp to add an empty body for downloadAssetFinished"
