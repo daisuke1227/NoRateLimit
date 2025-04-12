@@ -9,19 +9,14 @@ else()
 endif()
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-
 project(NoRateLimit VERSION 1.0.0)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wno-error=out-of-line-declaration)
 endif()
 
-file(GLOB_RECURSE SOURCES
-        src/*.cpp
-)
-add_library(${PROJECT_NAME} SHARED
-        ${SOURCES}
-)
+file(GLOB_RECURSE SOURCES src/*.cpp)
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 if (NOT DEFINED ENV{GEODE_SDK})
     message(FATAL_ERROR "Unable to find Geode SDK! Please define GEODE_SDK environment variable to point to Geode")
@@ -32,21 +27,27 @@ endif()
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
 set(GENERATED_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode/GeneratedSource.cpp")
+set(PATCHED_GENERATED_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode/GeneratedSource_patched.cpp")
 
 add_custom_command(
-    OUTPUT "${GENERATED_SOURCE}.patched"
-    COMMAND ${CMAKE_COMMAND} -E echo "Patching ${GENERATED_SOURCE}"
-    # Note how $$ is used to escape literal $ for Ninja:
-    COMMAND sed -E "s/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$$/$$1 { }/" "${GENERATED_SOURCE}" > "${GENERATED_SOURCE}.patched"
-    COMMAND ${CMAKE_COMMAND} -E copy "${GENERATED_SOURCE}.patched" "${GENERATED_SOURCE}"
+    OUTPUT "${PATCHED_GENERATED_SOURCE}"
+    COMMAND ${CMAKE_COMMAND} -E echo "Patching ${GENERATED_SOURCE} into ${PATCHED_GENERATED_SOURCE}"
+    COMMAND sed -E "s/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$$/$$1 { }/" "${GENERATED_SOURCE}" > "${PATCHED_GENERATED_SOURCE}"
     DEPENDS "${GENERATED_SOURCE}"
-    COMMENT "Patching GeneratedSource.cpp to add an empty body for downloadAssetFinished"
 )
 
 add_custom_target(patch_geode_bindings ALL
-    DEPENDS "${GENERATED_SOURCE}.patched"
+    DEPENDS "${PATCHED_GENERATED_SOURCE}"
 )
 
-add_dependencies(GeodeBindings patch_geode_bindings)
+get_target_property(GB_SOURCES GeodeBindings SOURCES)
+if (GB_SOURCES)
+    list(REMOVE_ITEM GB_SOURCES "${GENERATED_SOURCE}")
+    list(APPEND GB_SOURCES "${PATCHED_GENERATED_SOURCE}")
+    set_target_properties(GeodeBindings PROPERTIES SOURCES "${GB_SOURCES}")
+else()
+    message(WARNING "Could not modify GeodeBindings sources; the generated file might not be patched.")
+endif()
 
+add_dependencies(GeodeBindings patch_geode_bindings)
 setup_geode_mod(${PROJECT_NAME})
