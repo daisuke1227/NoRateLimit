@@ -12,6 +12,10 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 project(NoRateLimit VERSION 1.0.0)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wno-error=out-of-line-declaration)
+endif()
+
 file(GLOB_RECURSE SOURCES
         src/*.cpp
 )
@@ -26,9 +30,5 @@ else()
 endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wno-error=out-of-line-declaration)
-endif()
 
 setup_geode_mod(${PROJECT_NAME})
