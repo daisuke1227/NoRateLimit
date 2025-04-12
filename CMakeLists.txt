@@ -31,4 +31,21 @@ endif()
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
+set(GENERATED_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode/GeneratedSource.cpp")
+
+add_custom_command(
+    OUTPUT "${GENERATED_SOURCE}.patched"
+    COMMAND ${CMAKE_COMMAND} -E echo "Patching ${GENERATED_SOURCE}"
+    COMMAND sed -E "s/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$/\\1 { }/" "${GENERATED_SOURCE}" > "${GENERATED_SOURCE}.patched"
+    COMMAND ${CMAKE_COMMAND} -E copy "${GENERATED_SOURCE}.patched" "${GENERATED_SOURCE}"
+    DEPENDS "${GENERATED_SOURCE}"
+    COMMENT "Patching GeneratedSource.cpp to add an empty body for downloadAssetFinished"
+)
+
+add_custom_target(patch_geode_bindings ALL
+    DEPENDS "${GENERATED_SOURCE}.patched"
+)
+
+add_dependencies(GeodeBindings patch_geode_bindings)
+
 setup_geode_mod(${PROJECT_NAME})
