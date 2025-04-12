@@ -23,8 +23,9 @@ set(GENERATED_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode/Genera
 set(PATCHED_GENERATED_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode/GeneratedSource_patched.cpp")
 add_custom_command(
   OUTPUT "${PATCHED_GENERATED_SOURCE}"
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/bindings/bindings/Geode"
   COMMAND ${CMAKE_COMMAND} -E echo "Patching ${GENERATED_SOURCE} into ${PATCHED_GENERATED_SOURCE}"
-  COMMAND /bin/sh -c "sed -E 's/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$$$$/$$$$1 { }/' \"${GENERATED_SOURCE}\" > \"${PATCHED_GENERATED_SOURCE}\""
+  COMMAND /bin/sh -c "sed -E 's/(void[[:space:]]+CustomSongWidget::downloadAssetFinished\\(int[[:space:]]+p0,[[:space:]]+GJAssetType[[:space:]]+p1\\)[[:space:]]*)$$/$$1 { }/' \"${GENERATED_SOURCE}\" > \"${PATCHED_GENERATED_SOURCE}\""
   DEPENDS "${GENERATED_SOURCE}"
 )
 add_custom_target(patch_geode_bindings ALL DEPENDS "${PATCHED_GENERATED_SOURCE}")
